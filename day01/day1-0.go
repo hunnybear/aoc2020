@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
+	"strconv"
 )
-
-//var pattern regexp.Regexp = regexp.Compile("^(\d+)-(\d+)\s+(\w)\s+(\w+)\s*$")
 
 // Return number valid data looks like:
 //  ```1-3 a: abcde
@@ -16,10 +16,28 @@ import (
 //     2-9 c: ccccccccc
 //  ```
 
+var re = regexp.MustCompile(`(\d+)-(\d+)\s+([a-zA-Z]):\s+([a-zA-Z]+)$`)
+
 func is_valid(line string) bool {
-	//match := pattern.FindAllStringSubmatch(line, 1)
-	//fmt.Println(match)
-	//return match != nil
+	fmt.Println(line)
+	res := re.FindAllStringSubmatch(line, -1)
+	fmt.Println(res)
+	min, err := strconv.Atoi(res[0][1])
+	if err != nil {
+		fmt.Println(line)
+		fmt.Println(res)
+		log.Fatal(err)
+	}	
+	max, err := strconv.Atoi(res[0][2])
+	if err != nil {
+		fmt.Println(line)
+		fmt.Println(res)
+		log.Fatal(err)
+	}
+	count := strings.Count(res[0][4], res[0][3])
+
+	return min <= count && count <= max
+
 	return true
 }
 
@@ -27,18 +45,6 @@ func is_valid(line string) bool {
 func main() {
 	file, err := os.Open("data")
 	valid := 0
-
-	re := regexp.MustCompile(`a(x*)b`)
-	// Indices:
-	//    01234567   012345678
-	//    -ab-axb-   -axxb-ab-
-	fmt.Println(re.FindAllStringSubmatchIndex("-ab-", -1))
-	fmt.Println(re.FindAllStringSubmatchIndex("-axxb-", -1))
-	fmt.Println(re.FindAllStringSubmatchIndex("-ab-axb-", -1))
-	fmt.Println(re.FindAllStringSubmatchIndex("-axxb-ab-", -1))
-	fmt.Println(re.FindAllStringSubmatchIndex("-foo-", -1))
-
-	fmt.Println("be-gin")
 
 	if err != nil {
 		log.Fatal(err)
