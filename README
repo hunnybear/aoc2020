@@ -1,6 +1,7 @@
 # Setting up environment
 
 Decided on SBCL after days of fighting with clisp and getting frustrated.
+then I decided on go cos I just wanted to write a thing with a gods-damned regex.
 
 ```
 curl -O https://beta.quicklisp.org/quicklisp.lisp
