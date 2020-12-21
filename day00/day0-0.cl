@@ -7,9 +7,9 @@
         (cons min (range (+ min 1) max))))
 
 (set 'values (with-open-file (stream "data")
-(loop for line = (read-line stream nil) 
-    while line
-    collect (parse-integer line))))
+    (loop for line = (read-line stream nil) 
+        while line
+        collect (parse-integer line))))
 
 (loop 
     while values

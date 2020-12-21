@@ -1,0 +1,8 @@
+# Setting up environment
+
+Decided on SBCL after days of fighting with clisp and getting frustrated.
+
+```
+curl -O https://beta.quicklisp.org/quicklisp.lisp
+sbcl --load quicklisp.lisp
+```
