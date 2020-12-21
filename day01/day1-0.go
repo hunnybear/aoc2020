@@ -50,34 +50,32 @@ func is_valid(line string) valid {
 
 	return valid{
 		part_0: min <= count && count <= max,
-		part_1: (full_string[min + 1] == target) != (full_string[max+1] == target)
+		part_1: (full_string[min - 1] == []byte(target)[0]) != (full_string[max - 1] == []byte(target)[0]),
 	}
-}
-
-func is_valid_part_1(line string) bool {
-
 }
 
 
 func main() {
 	file, err := os.Open("data")
+
+	defer file.Close()
+
 	valid_part_0 := 0
 	valid_part_1 := 0
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
 		validity := is_valid(scanner.Text())
 		fmt.Println(validity)
-		if validity.part_0 {
+		if validity.part_0 == true {
 			valid_part_0 += 1
 		}
-		if validity.part_1 {
+		if validity.part_1 == true {
 			valid_part_1 += 1
 		}
 	}
