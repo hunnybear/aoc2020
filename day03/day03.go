@@ -1,5 +1,4 @@
 //usr/bin/env go run $0 $@ ; exit
-// 1934917632 is too low
 
 // right 3, down 1
 package main
