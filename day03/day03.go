@@ -15,9 +15,28 @@ import (
 var open byte = '.'
 var tree byte = '#'
 
-func main() {
+type slope struct {
+	x int8
+	y int8
+}
+
+func score_run(the_map [][]byte, slope_x int, slope_y int) int {
 	trees := 0
+	x := 0
 	
+	for y := 0; y < len(the_map); y += slope_y {
+		if the_map[y][x % len(the_map[y])] == tree {
+			trees ++
+		}
+
+		x += slope_x
+	}
+
+	return trees
+}
+
+func main() {
+
 	input, err := ioutil.ReadFile("input")
 	if err != nil {
 		log.Fatal(err)
@@ -25,14 +44,7 @@ func main() {
 
 	the_map := bytes.Split(bytes.TrimFunc(input, unicode.IsSpace), []byte("\n"))
 
-	x := 0
+	trees := score_run(the_map, 3, 1)
 	
-	for y := 0; y < len(the_map); y ++ {
-		if the_map[y][x % len(the_map[y])] == tree {
-			trees ++
-		}
-
-		x += 3
-	}
 	fmt.Println(trees)
 }
