@@ -81,7 +81,6 @@ func generate_ruleset_and_cache(input string) ruleset {
 
 		contents_match := contents_re.FindAllStringSubmatch(match[0][2], -1)
 		if contents_match[0][0] == NO_OTHER{continue}
-		//fmt.Println(kind)
 		for _, match := range contents_match {
 
 				entry_count, err := strconv.Atoi(string(match[1]))
@@ -89,12 +88,8 @@ func generate_ruleset_and_cache(input string) ruleset {
 					log.Fatal(err)
 				}
 			
-				//fmt.Printf("entry (%d) is %s\n", entry_count, contents_entry[2])
-
 				my_ruleset[kind][match[2]] = entry_count
 			}
-		
-		//fmt.Println(contents_match)
 	}
 	return my_ruleset
 }
