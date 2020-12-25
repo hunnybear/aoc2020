@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-//	"io"
 	"io/ioutil"
 	"unicode"
 )
