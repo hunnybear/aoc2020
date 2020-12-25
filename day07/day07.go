@@ -53,7 +53,16 @@ func contain_count(kind string, container string, rules ruleset) int {
 	return count
 }
 
-func can_contain(kind string, container string, count int, rules ruleset) contain_res {
+func max_container_count(kind string, rules ruleset) int {
+	count := 0
+	for contained_kind, contained_kind_count := range rules[kind] {
+		count += contained_kind_count * (1 + max_container_count(contained_kind, rules))
+	}
+
+	return count
+}
+
+func can_contain_kind(kind string, container string, count int, rules ruleset) contain_res {
 	count_res := contain_count(kind, container, rules)
 	return contain_res{contains:count_res > 0, total:count_res} 
 }
@@ -109,12 +118,13 @@ func main() {
 	total_able_gold := 0
 
 	for kind, _ := range my_ruleset {
-		does_contain := can_contain("shiny gold", kind, 1, my_ruleset)
+		does_contain := can_contain_kind("shiny gold", kind, 1, my_ruleset)
 		if does_contain.contains {total_able_gold++}
 		able_to_contain[kind] = does_contain.total
 
 	}
 
 	fmt.Println(total_able_gold)
+	fmt.Println(max_container_count("shiny gold", my_ruleset))
 
 }
