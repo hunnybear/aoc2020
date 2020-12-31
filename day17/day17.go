@@ -1,4 +1,5 @@
 //usr/bin/env go run $0 $@ ; exit
+// part 1 == 273
 
 package main
 
