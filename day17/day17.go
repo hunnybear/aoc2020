@@ -18,8 +18,12 @@ const INACTIVE = '.'
 var DEBUG = false
 
 type Boundary struct {
-	min Cell
-	max Cell
+	min NCell
+	max NCell
+}
+
+type NCell struct{
+	coordinates []int
 }
 
 type Cell struct {
@@ -28,35 +32,96 @@ type Cell struct {
 	z int
 }
 
-type CoordinateSpace map[Cell]bool
+
+
+type CoordinateSpace map[NCell]bool
 type DimensionButNotLikeInGeometry CoordinateSpace
 
-func get_neighbors(cell Cell) [26]Cell {
-	// Neighboars. Like pigs but kinda like horses.
-	var neighboars [26]Cell
-	i := 0
-	for x := cell.x - 1; x <= cell.x + 1; x++ {
-		for y := cell.y - 1; y <= cell.y + 1; y++ {
-			for z := cell.z - 1; z <= cell.z + 1; z++ {
-				if x == cell.x && y == cell.y && z == cell.z {
-					continue
-				}
-				neighboars[i] = Cell{x:x,y:y,z:z}
-				i++
+func (space DimensionButNotLikeInGeometry) Validate() bool {
+	dimensions := -1
+	cell_dimensions := -1
+	for cell, _ := range space {
+		cell_dimensions = cell.Dimensions()
+		if cell_dimensions != dimensions {
+			if dimensions == -1 {
+				dimensions = cell_dimensions
+			} else {
+				return false
 			}
 		}
 	}
+
+	if dimensions < 1 {
+		return false
+	}
+	return true
+}
+
+func (space DimensionButNotLikeInGeometry) Dimensions() int {
+	space.Validate()
+	for cell, _ := range space {
+		return cell.Dimensions()
+	}
+}
+
+func (cell NCell) Dimensions() int {return len(cell.coordinates)}
+
+func (cell NCell) Equals(other []int) bool {
+	if len(cell.coordinates) != len(other) { return false }
+	for idx, this_val := range cell.coordinates {
+		if this_val != other[idx] {
+			return false
+		}
+	}
+	return true
+}
+
+func (cell NCell) GetNeighbors() []NCell {
+	var neighboars = []NCell{}
+
+	for _, neighboar_coords := range get_permutations(-1, 1, cell.Dimensions()) {
+		if cell.Equals(neighboar_coords){continue}
+		neighboars = append(neighboars, NCell{coordinates:neighboar_coords})
+	}
+
 	return neighboars
 }
 
-func get_cell_active(cell Cell, dimension DimensionButNotLikeInGeometry) bool {
+func get_neighbors(cell Cell) []Cell {
+	// Neighboars. Like pigs but kinda like horses.
+	var neighboars = []Cell{}
+
+	for _, n_c := range get_permutations(-1, 1, 3) {
+		neighboars = append(neighboars, Cell{x:n_c[0], y:n_c[1], z:n_c[2]})
+	}
+
+	return neighboars
+}
+
+func get_permutations(min int, max int, n int) [][]int {
+	permutations := [][]int{}
+	for element := min; element <= max; element++ {
+		if n > 1 {
+			for _, remainder := range get_permutations(min, max, n-1) {
+				permutations = append(permutations, append([]int{element}, remainder...))
+			}
+		} else {
+			permutations = append(permutations, []int{element})
+		}
+		
+	}
+
+	return permutations
+}
+
+func get_cell_active(cell NCell, dimension DimensionButNotLikeInGeometry) bool {
 	active_neighbors := 0
 	is_active, present:= dimension[cell]
 	if ! present {
 		is_active = false
 	}
 
-	for _, neighbor := range get_neighbors(cell) {
+	for _, neighbor := range cell.GetNeighbors() {
 		neighbor_active, _ := dimension[neighbor]
 		if neighbor_active == true {active_neighbors ++}
 
@@ -71,59 +136,55 @@ func get_cell_active(cell Cell, dimension DimensionButNotLikeInGeometry) bool {
 }
 
 func get_bounds(dimension DimensionButNotLikeInGeometry) Boundary {
-	min_x := int((^uint(0)) >> 1)
-	min_y := min_x
-	min_z := min_x
+	max_int := int((^uint(0)) >> 1)
+	min_int := -min_val -1
 
-	max_x := -min_x -1
-	max_y := max_x
-	max_z := max_x
+	// Don't validate here, already done inside .Dimensions()
+	dimensions := dimension.Dimensions()
+
+	mins := make([]int, dimensions)
+	maxes := make([]int, dimensions)
+
+	for i := 0; i < dimensions; i++ {
+		mins[i] = max_int
+		maxes[i] = min_int
+	}
 
 	for cell, is_active := range dimension {
 		if ! is_active {
 			continue
 		}
 
-		if cell.x < min_x {
-			min_x = cell.x
-		} else if cell.x > max_x {
-			max_x = cell.x
-		}
-
-		if cell.y < min_y {
-			min_y = cell.y
-		} else if cell.y > max_y {
-			max_y = cell.y
-		}
-
-		if cell.z < min_z {
-			min_z = cell.z
-		} else if cell.z > max_z {
-			max_z = cell.z
+		for i := 0; i < dimensions; i++ {
+			if cell.coordinates[i] < mins[i] {
+				mins[i] = cell.coordinates[i]
+			} else if cell.coordinates[i] > maxes[i] {
+				maxes[i] = cell.coordinates[i]
+			}
 		}
 	}
 
 	return Boundary {
-		min: Cell{x: min_x, y: min_y, z: min_z},
-		max: Cell{x: max_x, y: max_y, z: max_z},
+		min: NCell{coordinates: mins},
+		max: NCell{coordinates: maxes},
 	}
 }
 
 func print(dimension DimensionButNotLikeInGeometry) {
-	 bounds := get_bounds(dimension)
-	 for z := bounds.min.z; z <= bounds.max.z; z++ {
-	 	fmt.Printf("z: %d\n\n", z)
-	 	for x := bounds.min.x; x <= bounds.max.x; x++ {
-	 		for y := bounds.min.y; y <= bounds.max.y; y++ {
-	 			is_active, _ := dimension[Cell{x:x, y:y, z:z}]
-	 			char := INACTIVE
-	 			if is_active{char=ACTIVE}
-	 			fmt.Printf("%s", string(char))
-	 		}
-	 		fmt.Printf("\n")
-	 	}
-	 	fmt.Println("\n\n")
-	 }
+	//bounds := get_bounds(dimension)
+	//for z := bounds.min.z; z <= bounds.max.z; z++ {
+	//	fmt.Printf("z: %d\n\n", z)
+	//	for x := bounds.min.x; x <= bounds.max.x; x++ {
+	//		for y := bounds.min.y; y <= bounds.max.y; y++ {
+	//			is_active, _ := dimension[Cell{x:x, y:y, z:z}]
+	//			char := INACTIVE
+	//			if is_active{char=ACTIVE}
+	//			fmt.Printf("%s", string(char))
+	//		}
+	//		fmt.Printf("\n")
+	//	}
+	//	fmt.Println("\n\n")
+	//}
 }
 
 func generation(dimension DimensionButNotLikeInGeometry) DimensionButNotLikeInGeometry {
@@ -144,22 +205,36 @@ func generation(dimension DimensionButNotLikeInGeometry) DimensionButNotLikeInGe
 		// if performance becomes an issue, delete rather than set to false
 		new_dimension[cell] = get_cell_active(cell, dimension)
 	}
-	if DEBUG {print(new_dimension)}
+	if DEBUG {
+		print(new_dimension)
+		new_dimension.Validate()	
+	}
 	return new_dimension
 }
 
-func parse_input(input []byte) DimensionButNotLikeInGeometry {
-	y := 0
+func parse_input(input []byte, dimensions int) DimensionButNotLikeInGeometry {
+	// from the problem we're projecting these two-d input states into 3|4 dim
+	// space (writing as N-dim cos fun). so we assume that fixed 2 d and then
+	// allow the n to be flexible, just create the suffix additional dimensions
+	// and call it a day
+
+	suffix := []int{}
+	for i := 2; i < dimensions; i++{suffix = append(suffix, 0)}
+
+	cell := make(NCell)
+
 	dimension := make(DimensionButNotLikeInGeometry)
 	input_rows := bytes.Split(input, []byte{'\n'})
 	for x, row := range input_rows {
-		for z, char := range row {
+		for y, char := range row {
+			cell = NCell{append([]int{x, y}, suffix...)}
 			// in order to save loop length when iterating over all potentially
 			// active points, don't store 'false' entries
-			if char == ACTIVE {dimension[Cell{x:x,y:y,z:z}]=true}
+			if char == ACTIVE {dimension[cell]=true}
 		}
 	}
 
+	dimension.Validate()
 	return dimension
 }
 
@@ -200,4 +275,6 @@ func main() {
 	}
 
 	fmt.Printf("Part 1: %d\n", part_1_answer)
+
+	fmt.Println(NCell{coordinates:[]int{0,0,0,0}}.GetNeighbors())
 }
